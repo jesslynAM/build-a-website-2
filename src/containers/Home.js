@@ -1,65 +1,114 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
-
-import Header from "../components/Header";
-import WeatherImage from "../components/WeatherImage";
 
 import City from "../components/City";
 
 function Home() {
-  const history = useHistory();
-  const [weatherData, setWeatherData] = useState(null);
-  const [city, setCity] = useState("Jakarta");
-
   const [cities, setCities] = useState([
     {
-      name: "Jakarta",
+      name: "Paris",
       currentTemp: "0",
+      weatherType: "",
+      color: "bg-yellow-500",
     },
+    {
+      name: "London",
+      currentTemp: "0",
+      weatherType: "",
+      color: "bg-red-500",
+    },
+    {
+      name: "Oslo",
+      currentTemp: "0",
+      weatherType: "",
+      color: "bg-blue-500",
+    },
+    {
+      name: "Copenhagen",
+      currentTemp: "0",
+      weatherType: "",
+      color: "bg-purple-500",
+    },
+    {
+      name: "Russia",
+      currentTemp: "0",
+      weatherType: "",
+      color: "bg-green-500",
+    },
+    {
+      name: "Stockholm",
+      currentTemp: "0",
+      weatherType: "",
+      color: "bg-pink-500",
+    },
+    // {
+    //   name: "New York",
+    //   currentTemp: "0",
+    //   weatherType: "",
+    //   color: "bg-blue-500",
+    // },
+    // {
+    //   name: "Tokyo",
+    //   currentTemp: "0",
+    //   weatherType: "",
+    //   color: "bg-blue-500",
+    // },
   ]);
 
   useEffect(() => {
-    // console.log(process.env.REACT_APP_WEATHER_KEY);
-    axios
+    updateAllWeatherData();
+  }, []);
+
+  // Fetch the weather data for 1 city
+  async function fetchWeatherData(cityName) {
+    const res = await axios
       .get(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.REACT_APP_WEATHER_KEY}`
+        `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${process.env.REACT_APP_WEATHER_API}`
       )
       .then(function (response) {
         // Successful request
         const weather = response.data;
-        setWeatherData(weather);
+        return weather;
       })
       .catch(function (error) {
         // The best practice of coding is to not use console.log
-        console.log(error);
+        console.warn(error);
       });
-  }, [city]);
 
-  useEffect(() => {
-    const searchParams = history.location.search;
-    const urlParams = new URLSearchParams(searchParams);
-    const city = urlParams.get("city");
-    if (city) {
-      setCity(city);
-    }
-  }, [history]);
+    return res;
+  }
 
-  const { currentTemp } = useMemo(() => {
-    let currentTemp = "";
-    if (weatherData) {
-      currentTemp = `${Math.round(weatherData.main.temp)}°C`;
-    }
-    return {
-      currentTemp,
-    };
-  }, [weatherData]);
+  // update the list data
+  async function updateAllWeatherData(params) {
+    cities.forEach(function (citiesItems, index) {
+      let weatherData = {};
+      let newCities = [...cities];
+
+      fetchWeatherData(citiesItems.name).then((res) => {
+        weatherData = res;
+
+        newCities[index].currentTemp = weatherData.main.temp;
+        newCities[index].weatherType = weatherData.weather[0].main;
+        setCities(newCities);
+      });
+    });
+  }
 
   return (
-    <div className="flex flex-col h-screen bg-purple-300 text-6xl">
-      <City cityName={city} temp={currentTemp} color={"bg-yellow-200"} />
-      <City cityName={city} temp={currentTemp} color={"bg-blue-200"} />
-      <City cityName={city} temp={currentTemp} color={"bg-pink-200"} />
+    // Container
+    <div className="flex flex-col h-screen bg-green-100">
+      <div className="text-4xl text-yellow-500 font-semibold text-center my-4">
+        Our Weather App
+      </div>
+
+      {cities.map((item, index) => (
+        <City
+          cityName={item.name}
+          weatherType={item.weatherType}
+          temp={item.currentTemp}
+          color={item.color}
+        />
+      ))}
     </div>
   );
 }
